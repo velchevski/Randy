@@ -35,27 +35,23 @@ int pos = 90;
 int tiltServoDefaultPosition = 150;
 int panServoDefaultPosition = 90;
 int defaultServoActuationTime = random(0, 4);
-int turnFactor = 90;
 
 void setup() {
-
   Serial.begin(9600);
 
-  pinMode(5, OUTPUT);
-  pinMode(6, OUTPUT);
-
-  // Turn on servos
   tiltServo.attach(10);
   panServo.attach(9);
 
-  // Setup proximity sensor pins
+  leftMotor.setSpeed(100);
+  rightMotor.setSpeed(100);
+
   pinMode(trigger, OUTPUT);
   pinMode(echo, INPUT);
 
-  pinMode(button, INPUT);
+  pinMode(leftLED, OUTPUT);
+  pinMode(rightLED, OUTPUT);
 
-  leftMotor.setSpeed(100);
-  rightMotor.setSpeed(100);
+  pinMode(button, INPUT);
 
   robotInitiated();
 }
@@ -78,24 +74,6 @@ void moveBackwards() {
 void halt() {
   leftMotor.run(RELEASE);
   rightMotor.run(RELEASE);
-}
-
-void turnLeft() {
-  for (int i = 0; i <= turnFactor; i++) {
-    leftMotor.run(BACKWARD);
-    rightMotor.run(BACKWARD);
-    delay(10);
-  }
-  halt();
-}
-
-void turnRight() {
-  for (int i = 0; i <= turnFactor; i++) {
-    leftMotor.run(FORWARD);
-    rightMotor.run(FORWARD);
-    delay(10);
-  }
-  halt();
 }
 
 void smartTurnLeft() {
@@ -135,7 +113,7 @@ void smartTurnRight() {
 }
 
 void lookLeft() {
-  rotateServo(panServo, 90, 180, defaultServoActuationTime);
+  rotateServo(panServo, panServo.read(), 180, defaultServoActuationTime);
   tiltAround();
   currentDistanceLeft = lookAndEvaluate();
   Serial.println("LEFT distance: ");
@@ -143,7 +121,7 @@ void lookLeft() {
 }
 
 void lookRight() {
-  rotateServo(panServo, 90, 0, defaultServoActuationTime);
+  rotateServo(panServo, panServo.read(), 0, defaultServoActuationTime);
   tiltAround();
   currentDistanceRight = lookAndEvaluate();
   Serial.println("RIGHT distance: ");
@@ -250,9 +228,7 @@ void manageRobotState() {
   if (digitalRead(button) == LOW) {
     robotState = 0;
     halt();
-    digitalWrite(piezo, LOW);
-    rotateServo(panServo, panServo.read(), 45, defaultServoActuationTime);
-    rotateServo(tiltServo, tiltServo.read(), 180, defaultServoActuationTime);
+    idlePose();
     blinkLED(leftLED, 1000);
     blinkLED(rightLED, 1000);
   } else if (digitalRead(button) == HIGH) {
@@ -262,6 +238,11 @@ void manageRobotState() {
     simpleObstacleAvoidence();
   }
   delay(100);
+}
+
+void idlePose() {
+  rotateServo(panServo, panServo.read(), 45, defaultServoActuationTime);
+  rotateServo(tiltServo, tiltServo.read(), 180, defaultServoActuationTime);
 }
 
 // Sound module
