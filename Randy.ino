@@ -1,7 +1,3 @@
-// Adafruit Motor shield library
-// copyright Adafruit Industries LLC, 2009
-// this code is public domain, enjoy!
-
 #include <AFMotor.h>
 #include <Servo.h>
 #include "pitches.h"
@@ -14,7 +10,6 @@ AF_DCMotor rightMotor(2);
 Servo tiltServo;
 Servo panServo;
 
-
 // Proximity Sensor
 #define trigger 12
 #define echo 13
@@ -26,12 +21,11 @@ int rightLED = 6;
 // Piezo
 int piezo = 8;
 
-
 // Config
 int currentDistanceLeft, currentDistanceRight, currentDistanceAhead;
 int minimumDistance = 30;
+
 int pos = 90;
-bool obstacleLeft, obstacleRight, obstacleAhead;
 int tiltServoDefaultPosition = 150;
 int panServoDefaultPosition = 90;
 int defaultServoActuationTime = random(0, 4);
@@ -60,14 +54,12 @@ void setup() {
   rightMotor.setSpeed(100);
 
   robotInitiated();
-  
 }
 
 void loop() {
   simpleObstacleAvoidence();
-
-  digitalWrite(5, HIGH);
-  digitalWrite(6, HIGH);
+  digitalWrite(leftLED, HIGH);
+  digitalWrite(rightLED, HIGH);
 }
 
 void moveForwards() {
@@ -131,7 +123,6 @@ void smartTurnRight() {
     delay(20);
   }
 }
-
 
 void lookLeft() {
   rotateServo(panServo, 90, 180, defaultServoActuationTime);
@@ -208,7 +199,6 @@ void scanAhead() {
 }
 
 void simpleObstacleAvoidence() {
-  //  scanSurroundings();
   if (currentDistanceAhead >= minimumDistance) {
     scanAhead();
     moveForwards();
@@ -237,56 +227,56 @@ void makeNewDirectionDecision() {
 void blinkLED(int LED) {
   if(digitalRead(LED) == LOW) {
     digitalWrite(LED, HIGH);
-    delay(80); 
-    digitalWrite(LED, LOW);     
+    delay(80);
+    digitalWrite(LED, LOW);
   } else {
     digitalWrite(LED, LOW);
-    delay(80); 
-    digitalWrite(LED, HIGH);       
+    delay(80);
+    digitalWrite(LED, HIGH);
   }
 }
 
 void vocalize(int speakerPin, float noteFrequency, long noteDuration) {
-  
+
   int x;
-  
+
   // Convert the frequency to microseconds
   float microsecondsPerWave = 1000000/noteFrequency;
-  
+
   // Calculate how many HIGH/LOW cycles there are per millisecond
   float millisecondsPerCycle = 1000/(microsecondsPerWave * 2);
-  
+
   // Multiply noteDuration * number or cycles per millisecond
   float loopTime = noteDuration * millisecondsPerCycle;
-  
+
   // Play the note for the calculated loopTime.
-  
-  for (x=0;x<loopTime;x++) {   
-    digitalWrite(speakerPin,HIGH); 
-    delayMicroseconds(microsecondsPerWave); 
-    digitalWrite(speakerPin,LOW); 
-    delayMicroseconds(microsecondsPerWave); 
+
+  for (x=0;x<loopTime;x++) {
+    digitalWrite(speakerPin,HIGH);
+    delayMicroseconds(microsecondsPerWave);
+    digitalWrite(speakerPin,LOW);
+    delayMicroseconds(microsecondsPerWave);
   }
-  
-}   
+
+}
 
 void R2D2(){
-  vocalize(piezo, note_A7,100); //A 
-  vocalize(piezo, note_G7,100); //G 
-  vocalize(piezo, note_E7,100); //E 
+  vocalize(piezo, note_A7,100); //A
+  vocalize(piezo, note_G7,100); //G
+  vocalize(piezo, note_E7,100); //E
   vocalize(piezo, note_C7,100); //C
-  vocalize(piezo, note_D7,100); //D 
-  vocalize(piezo, note_B7,100); //B 
-  vocalize(piezo, note_F7,100); //F 
-  vocalize(piezo, note_C8,100); //C 
-  vocalize(piezo, note_A7,100); //A 
-  vocalize(piezo, note_G7,100); //G 
-  vocalize(piezo, note_E7,100); //E 
+  vocalize(piezo, note_D7,100); //D
+  vocalize(piezo, note_B7,100); //B
+  vocalize(piezo, note_F7,100); //F
+  vocalize(piezo, note_C8,100); //C
+  vocalize(piezo, note_A7,100); //A
+  vocalize(piezo, note_G7,100); //G
+  vocalize(piezo, note_E7,100); //E
   vocalize(piezo, note_C7,100); //C
-  vocalize(piezo, note_D7,100); //D 
-  vocalize(piezo, note_B7,100); //B 
-  vocalize(piezo, note_F7,100); //F 
-  vocalize(piezo, note_C8,100); //C 
+  vocalize(piezo, note_D7,100); //D
+  vocalize(piezo, note_B7,100); //B
+  vocalize(piezo, note_F7,100); //F
+  vocalize(piezo, note_C8,100); //C
 }
 
 void robotInitiated() {
@@ -305,6 +295,3 @@ void turning() {
     vocalize(piezo, i, 60);
   }
 }
-
-
-
