@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 #include <AFMotor.h>
 #include <Servo.h>
 #include "pitches.h"
@@ -19,7 +21,11 @@ int leftLED = 5;
 int rightLED = 6;
 
 // Piezo
-int piezo = 8;
+int piezo = 4;
+
+// Mode Button
+int button = 11;
+int robotState = 0;
 
 // Config
 int currentDistanceLeft, currentDistanceRight, currentDistanceAhead;
@@ -42,13 +48,11 @@ void setup() {
   tiltServo.attach(10);
   panServo.attach(9);
 
-  // Set servos starting position
-  tiltServo.write(tiltServoDefaultPosition);
-  panServo.write(panServoDefaultPosition);
-
   // Setup proximity sensor pins
   pinMode(trigger, OUTPUT);
   pinMode(echo, INPUT);
+
+  pinMode(button, INPUT);
 
   leftMotor.setSpeed(100);
   rightMotor.setSpeed(100);
@@ -57,9 +61,7 @@ void setup() {
 }
 
 void loop() {
-  simpleObstacleAvoidence();
-  digitalWrite(leftLED, HIGH);
-  digitalWrite(rightLED, HIGH);
+  manageRobotState();
 }
 
 void moveForwards() {
@@ -99,12 +101,16 @@ void turnRight() {
 void smartTurnLeft() {
   turning();
   while (currentDistanceAhead <= minimumDistance) {
+    Serial.println("turning");
+    if (robotState == 0) {
+      break;
+    }
     scanAhead();
     leftMotor.setSpeed(50);
     rightMotor.setSpeed(50);
     leftMotor.run(BACKWARD);
     rightMotor.run(BACKWARD);
-    blinkLED(leftLED);
+    blinkLED(leftLED, 20);
     digitalWrite(rightLED, LOW);
     delay(20);
   }
@@ -113,12 +119,16 @@ void smartTurnLeft() {
 void smartTurnRight() {
   turning();
   while (currentDistanceAhead <= minimumDistance) {
+    Serial.println("turning");
+    if (robotState == 0) {
+      break;
+    }
     scanAhead();
     leftMotor.setSpeed(50);
     rightMotor.setSpeed(50);
     leftMotor.run(FORWARD);
     rightMotor.run(FORWARD);
-    blinkLED(rightLED);
+    blinkLED(rightLED, 20);
     digitalWrite(leftLED, LOW);
     delay(20);
   }
@@ -199,6 +209,8 @@ void scanAhead() {
 }
 
 void simpleObstacleAvoidence() {
+  // rotateServo(panServo, panServo.read(), panServoDefaultPosition, defaultServoActuationTime);
+  // rotateServo(tiltServo, tiltServo.read(), tiltServoDefaultPosition, defaultServoActuationTime);
   if (currentDistanceAhead >= minimumDistance) {
     scanAhead();
     moveForwards();
@@ -224,40 +236,50 @@ void makeNewDirectionDecision() {
   moveForwards();
 }
 
-void blinkLED(int LED) {
-  if(digitalRead(LED) == LOW) {
+void blinkLED(int LED, int blinkDelay) {
+  int currentLEDState = digitalRead(LED);
+  if (currentLEDState == LOW) {
     digitalWrite(LED, HIGH);
-    delay(80);
-    digitalWrite(LED, LOW);
   } else {
     digitalWrite(LED, LOW);
-    delay(80);
-    digitalWrite(LED, HIGH);
   }
+  delay(blinkDelay);
 }
 
+void manageRobotState() {
+  if (digitalRead(button) == LOW) {
+    robotState = 0;
+    halt();
+    digitalWrite(piezo, LOW);
+    rotateServo(panServo, panServo.read(), 45, defaultServoActuationTime);
+    rotateServo(tiltServo, tiltServo.read(), 180, defaultServoActuationTime);
+    blinkLED(leftLED, 1000);
+    blinkLED(rightLED, 1000);
+  } else if (digitalRead(button) == HIGH) {
+    robotState = 1;
+    digitalWrite(leftLED, HIGH);
+    digitalWrite(rightLED, HIGH);
+    simpleObstacleAvoidence();
+  }
+  delay(100);
+}
+
+// Sound module
 void vocalize(int speakerPin, float noteFrequency, long noteDuration) {
-
   int x;
-
   // Convert the frequency to microseconds
   float microsecondsPerWave = 1000000/noteFrequency;
-
   // Calculate how many HIGH/LOW cycles there are per millisecond
   float millisecondsPerCycle = 1000/(microsecondsPerWave * 2);
-
   // Multiply noteDuration * number or cycles per millisecond
   float loopTime = noteDuration * millisecondsPerCycle;
-
   // Play the note for the calculated loopTime.
-
   for (x=0;x<loopTime;x++) {
     digitalWrite(speakerPin,HIGH);
     delayMicroseconds(microsecondsPerWave);
     digitalWrite(speakerPin,LOW);
     delayMicroseconds(microsecondsPerWave);
   }
-
 }
 
 void R2D2(){
